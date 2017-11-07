@@ -1,8 +1,8 @@
 // @flow
 
-import 'es6-promise/auto'
-import 'isomorphic-fetch'
-import { compose } from 'ramda'
+import "es6-promise/auto"
+import "isomorphic-fetch"
+import { compose } from "ramda"
 
 /**
  * Flow types
@@ -21,7 +21,7 @@ type MediaFn = (options: {
   accessToken?: string,
   id?: string,
   size?: number,
-  type?: 'recent' | 'liked',
+  type?: "recent" | "liked",
 }) => Promise<{}>
 
 type InstagramInstance = {
@@ -37,16 +37,18 @@ type QueryFn = (options: {
   version?: string,
 }) => Promise<{}>
 
-type CreateInstagramInstanceFn = (options: Options) => InstagramInstance
+type CreateInstagramInstanceFn = (
+  options: Options
+) => InstagramInstance
 
 /**
  * Constants
  */
-const DEFAULT_ENDPOINT = '/users/'
-const DEFAULT_ORIGIN = 'https://api.instagram.com'
+const DEFAULT_ENDPOINT = "/users/"
+const DEFAULT_ORIGIN = "https://api.instagram.com"
 const DEFAULT_SIZE = 0
-const DEFAULT_USER = 'self'
-const DEFAULT_VERSION = 'v1'
+const DEFAULT_USER = "self"
+const DEFAULT_VERSION = "v1"
 
 /**
  * Error handling
@@ -63,17 +65,18 @@ const handleErrors = res => {
  * Core query
  */
 const query: QueryFn = ({
-  accessToken = '',
+  accessToken = "",
   endpoint = DEFAULT_ENDPOINT + DEFAULT_USER,
   origin = DEFAULT_ORIGIN,
   size = DEFAULT_SIZE,
   version = DEFAULT_VERSION,
-  fetchOptions = {}
+  fetchOptions = {},
 }) => {
-  const count: string = size ? `&count=${size}` : ''
+  const count: string = size ? `&count=${size}` : ""
 
   return fetch(
-    `${origin}/${version}${endpoint}?access_token=${accessToken}${count}`,{...fetchOptions}
+    `${origin}/${version}${endpoint}?access_token=${accessToken}${count}`,
+    { ...fetchOptions }
   )
     .then(handleErrors)
     .then(res => res.json())
@@ -82,14 +85,20 @@ const query: QueryFn = ({
 /**
  * Enhancers
  */
+
+const withFetchOptions = (fetchOptions = {}) => fn => ({
+  ...options
+}) => fn({ ...options, fetchOptions })
+
 const withUserId = (id = DEFAULT_USER) => fn => ({ ...options }) =>
   fn({ ...options, endpoint: DEFAULT_ENDPOINT + id })
 
-const withAccessToken = (accessToken = '') => fn => ({ ...options }) =>
-  fn({ ...options, accessToken })
+const withAccessToken = (accessToken = "") => fn => ({
+  ...options
+}) => fn({ ...options, accessToken })
 
-const withMedia = (type = 'recent') => fn => (
-  { endpoint = DEFAULT_ENDPOINT + DEFAULT_USER, ...options } = {},
+const withMedia = (type = "recent") => fn => (
+  { endpoint = DEFAULT_ENDPOINT + DEFAULT_USER, ...options } = {}
 ) => fn({ ...options, endpoint: `${endpoint}/media/${type}` })
 
 const withCount = (count = 0) => fn => ({ ...options }) =>
@@ -101,27 +110,42 @@ const withCount = (count = 0) => fn => ({ ...options }) =>
 /**
  * Public API
  */
-export const user: UserFn = ({ accessToken, id }) =>
-  compose(withUserId(id), withAccessToken(accessToken))(query)()
-
-export const media: MediaFn = ({ accessToken, type, id, size = 10 }) =>
+export const user: UserFn = ({
+  accessToken,
+  id,
+  fetchOptions = {},
+}) =>
   compose(
+    withFetchOptions(fetchOptions),
+    withUserId(id),
+    withAccessToken(accessToken)
+  )(query)()
+
+export const media: MediaFn = ({
+  accessToken,
+  type,
+  id,
+  size = 10,
+  fetchOptions = {},
+}) =>
+  compose(
+    withFetchOptions(fetchOptions),
     withUserId(id),
     withAccessToken(accessToken),
     withCount(size),
-    withMedia(type),
+    withMedia(type)
   )(query)()
 
 const createInstagramInstance: CreateInstagramInstanceFn = options => {
   if (
     !options ||
-    typeof options !== 'object' ||
-    typeof options.accessToken !== 'string'
+    typeof options !== "object" ||
+    typeof options.accessToken !== "string"
   ) {
     throw new Error(
       `Couldn't find instagram accessToken.
       Did you pass the accessToken correctly?
-      Should be like \`instagram({ accessToken: 'MY_TOKEN' })\``,
+      Should be like \`instagram({ accessToken: 'MY_TOKEN' })\``
     )
   }
   const { accessToken } = options
