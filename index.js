@@ -68,11 +68,12 @@ const query: QueryFn = ({
   origin = DEFAULT_ORIGIN,
   size = DEFAULT_SIZE,
   version = DEFAULT_VERSION,
+  fetchOptions = {}
 }) => {
   const count: string = size ? `&count=${size}` : ''
 
   return fetch(
-    `${origin}/${version}${endpoint}?access_token=${accessToken}${count}`,
+    `${origin}/${version}${endpoint}?access_token=${accessToken}${count}`,{...fetchOptions}
   )
     .then(handleErrors)
     .then(res => res.json())
